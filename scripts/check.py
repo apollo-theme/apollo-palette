@@ -196,8 +196,19 @@ REQUIRED_KEYS = ("schemaVersion", "id", "name", "appearance", "provenance", "col
 TEXT_ROLES = ("foreground", "foregroundSecondary", "foregroundInactive", "accent", "danger", "success", "info")
 
 
+def _is_hex(value):
+    return isinstance(value, str) and bool(HEX_COLOR.match(value))
+
+
 def check_schema(p):
-    return [f"{v}: missing key {k}" for v, d in p.items() for k in REQUIRED_KEYS if k not in d] + [f"{v}: bad hex {h}" for v, d in p.items() for h in iter_hex_colors(d) if not HEX_COLOR.match(h)]
+    errs = [f"{v}: missing key {k}" for v, d in p.items() for k in REQUIRED_KEYS if k not in d]
+    errs += [f"{v}: bad hex {h}" for v, d in p.items() for h in iter_hex_colors(d) if not HEX_COLOR.match(h)]
+    for v, d in p.items():
+        errs += [f"{v}: colors.{name} is not a hex color" for name, value in d.get("colors", {}).items() if not _is_hex(value)]
+        for bank in ("ansi", "bright"):
+            slots = d.get("terminal", {}).get(bank, [])
+            errs += [f"{v}: terminal.{bank}[{i}] is not a hex color" for i, value in enumerate(slots) if not _is_hex(value)]
+    return errs
 
 
 def check_slots(p):
