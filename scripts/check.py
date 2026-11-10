@@ -218,7 +218,7 @@ def main() -> int:
         errors.append(str(error))
     palettes = load_palettes()
     errors += check_schema(palettes) + check_slots(palettes) + check_contrast(palettes)
-    errors += [f"README tables:{name} block is stale; run scripts/tables.py --write" for name in tables.check()]
+    errors += [f"README tables:{name} block is missing or stale; run scripts/tables.py --write" for name in tables.check()]
     errors += check_readme(README.read_text(encoding="utf-8") if README.exists() else "", palettes)
     for error in errors:
         print(f"error: {error}", file=sys.stderr)
