@@ -140,6 +140,7 @@ def check_palette() -> None:
             raise ValueError("dark: restricted bright black no longer needs its usage constraint")
 
 
+EXAMPLE_SEPARATOR = re.compile(r"\|(\s*:?-{3,}:?\s*\|)+")
 REQUIRED_SECTIONS = ("Lineage", "Roles", "Contrast rules", "Why Apollo Light darkens semantic colors", "ANSI slot order", "Choosing colors for a new app")
 
 
@@ -179,14 +180,28 @@ def check_readme(text, palettes):
             errs.append(f"missing worked example {variant}")
             continue
         known = set(iter_hex_colors(palettes[variant]))
-        rows = [r for r in m.group(1).strip().splitlines()[2:] if r.startswith("|")]
+        table_lines = []
+        for line in (l.strip() for l in m.group(1).splitlines()):
+            if not line or EXAMPLE_SEPARATOR.fullmatch(line):
+                continue
+            if line.startswith("|"):
+                table_lines.append(line)
+            else:
+                errs.append(f"{variant}: unparseable example line: {line}")
+        rows = table_lines[1:]
         if not rows:
             errs.append(f"{variant}: worked example has no rows")
         for row in rows:
-            role, fg, bg, ratio, _ = [c.strip() for c in row.strip("|").split("|")]
+            cells = [c.strip() for c in row.strip("|").split("|")]
+            if len(cells) != 5:
+                errs.append(f"{variant}: unparseable example line: {row}")
+                continue
+            role, fg, bg, ratio, _ = cells
             for h in (fg, bg):
                 if h not in known:
                     errs.append(f"{variant} {role}: {h} not in {variant} palette")
+            if not (_is_hex(fg) and _is_hex(bg)):
+                continue
             if f"{contrast_ratio(fg, bg):.2f}" != ratio:
                 errs.append(f"{variant} {role}: ratio {ratio} != {contrast_ratio(fg, bg):.2f}")
     return errs

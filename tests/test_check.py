@@ -12,6 +12,8 @@ class ReadmeTests(unittest.TestCase):
     def test_wrong_ratio_fails(self): self.assertTrue(any("ratio 1.00" in e for e in self.errs(doc().replace("9.76", "1.00"))))
     def test_unknown_hex_fails(self): self.assertTrue(any("not in dark" in e for e in self.errs(doc().replace("#cfbc97", "#123456"))))
     def test_empty_example_fails(self): self.assertIn("light: worked example has no rows", self.errs(doc(light="")))
+    def test_indented_row_is_checked(self): self.assertTrue(any("ratio 1.00" in e for e in self.errs(doc(dark="  | Text | #cfbc97 | #141617 | 1.00 | primary |\n"))))
+    def test_stray_line_in_example_fails(self): self.assertTrue(any(e.startswith("dark: unparseable example line") for e in self.errs(doc(dark="| Text | #cfbc97 | #141617 | 9.76 | primary |\nstray note\n"))))
     def test_short_section_fails(self): self.assertTrue(any("80 words" in e for e in self.errs(doc().replace(WORDS, "short", 1))))
     def test_missing_section_fails(self): self.assertTrue(any("missing section" in e for e in self.errs(doc().replace("## Lineage", "## Other"))))
 class PaletteTests(unittest.TestCase):
