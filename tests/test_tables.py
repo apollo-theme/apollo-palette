@@ -50,6 +50,10 @@ class MarkerTests(unittest.TestCase):
         out = replace_between(readme(), "roles", "NEW")
         self.assertEqual(readme(roles="NEW"), out)
 
+    def test_replace_between_fills_empty_block(self):
+        empty = "<!-- tables:roles:start -->\n<!-- tables:roles:end -->\n"
+        self.assertEqual("<!-- tables:roles:start -->\nNEW\n<!-- tables:roles:end -->\n", replace_between(empty, "roles", "NEW"))
+
     def test_stale_detects_changed_block(self):
         tables = render(load_palettes())
         fresh = readme(tables["roles"], tables["contrast"])

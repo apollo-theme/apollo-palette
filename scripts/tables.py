@@ -45,14 +45,15 @@ def render(palettes: dict[str, dict]) -> dict[str, str]:
 
 
 def _pattern(name: str) -> re.Pattern:
-    return re.compile(rf"(<!-- tables:{name}:start -->\n)(.*?)(\n<!-- tables:{name}:end -->)", re.S)
+    return re.compile(rf"<!-- tables:{name}:start -->\n(.*?)\n?<!-- tables:{name}:end -->", re.S)
 
 
 def replace_between(text: str, name: str, body: str) -> str:
     pattern = _pattern(name)
     if not pattern.search(text):
         raise ValueError(f"missing tables:{name} markers")
-    return pattern.sub(lambda m: m.group(1) + body + m.group(3), text, count=1)
+    block = f"<!-- tables:{name}:start -->\n{body}\n<!-- tables:{name}:end -->"
+    return pattern.sub(lambda _: block, text, count=1)
 
 
 def stale(text: str) -> list[str]:
@@ -62,7 +63,7 @@ def stale(text: str) -> list[str]:
         match = _pattern(name).search(text)
         if not match:
             raise ValueError(f"missing tables:{name} markers")
-        if match.group(2).strip() != rendered[name]:
+        if match.group(1).strip() != rendered[name]:
             out.append(name)
     return out
 
